@@ -97,6 +97,7 @@
 (require 'pdf-view)
 (require 'pdf-util)
 (require 'pdf-info)
+(require 'pdf-roll)
 (require 'cus-edit)
 (require 'compile)
 (require 'cl-lib)
