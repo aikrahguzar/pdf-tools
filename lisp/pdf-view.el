@@ -1468,6 +1468,7 @@ Stores the region in `pdf-view-active-region'."
                   (setq begin-inside-image-p nil)
                   (posn-x-y pos)))
          (abs-begin (posn-x-y pos))
+         (page (/ (+ 3 (posn-point pos)) 4))
          (selection-style (or selection-style pdf-view-selection-style))
          pdf-view-continuous
          region)
@@ -1510,20 +1511,31 @@ Stores the region in `pdf-view-active-region'."
                                                 (+ (car begin) (car dxy))))
                                     (max 0 (min (cdr size)
                                                 (+ (cdr begin) (cdr dxy)))))))))
-                (let ((iregion (if rectangle-p
-                                   (list (min (car begin) (car end))
-                                         (min (cdr begin) (cdr end))
-                                         (max (car begin) (car end))
-                                         (max (cdr begin) (cdr end)))
-                                 (list (car begin) (cdr begin)
-                                       (car end) (cdr end)))))
+                (let* ((iregion (if rectangle-p
+                                    (list (min (car begin) (car end))
+                                          (min (cdr begin) (cdr end))
+                                          (max (car begin) (car end))
+                                          (max (cdr begin) (cdr end)))
+                                  (list (car begin) (cdr begin)
+                                        (car end) (cdr end))))
+                       (y (cdr (posn-x-y pos)))
+                       (dy (- y (cdr abs-begin))))
                   (setq region
                         (pdf-util-scale-pixel-to-relative iregion))
                   (pdf-view-display-region
                    (cons region pdf-view-active-region)
                    rectangle-p
-                   selection-style)
-                  (pdf-util-scroll-to-edges iregion)))))
+                   selection-style
+                   page)
+                  (if pdf-view-roll-minor-mode
+                      (cond
+                       ((and (> dy 0) (< (- (window-text-height window t) y) 20))
+                        (image-roll-scroll-forward
+                         (min 20 (or (nth 3 (pos-visible-in-window-p (posn-point pos) window t)) 0))))
+                       ((and (< dy 0) (< (- y (window-header-line-height window)) 20))
+                        (image-roll-scroll-backward
+                         (min 20 (or (nth 2 (pos-visible-in-window-p (posn-point pos) window t)) 0)))))
+                    (pdf-util-scroll-to-edges iregion))))))
       (setq pdf-view-active-region
             (append pdf-view-active-region
                     (list region)))
@@ -1545,7 +1557,7 @@ This is more useful for commands like
   (interactive "@e")
   (pdf-view-mouse-set-region event nil t))
 
-(defun pdf-view-display-region (&optional region rectangle-p selection-style)
+(defun pdf-view-display-region (&optional region rectangle-p selection-style page)
   ;; TODO: write documentation!
   (unless region
     (pdf-view-assert-active-region)
@@ -1553,7 +1565,7 @@ This is more useful for commands like
   (let ((colors (pdf-util-face-colors
                  (if rectangle-p 'pdf-view-rectangle 'pdf-view-region)
                  (bound-and-true-p pdf-view-dark-minor-mode)))
-        (page (pdf-view-current-page))
+        (page (or page (pdf-view-current-page)))
         (width (car (pdf-view-image-size))))
     (pdf-view-display-image
      (pdf-view-create-image
