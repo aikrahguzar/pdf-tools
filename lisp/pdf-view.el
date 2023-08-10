@@ -684,7 +684,7 @@ windows."
         (run-hooks 'pdf-view-change-page-hook))
       (when (window-live-p window)
         (image-set-window-vscroll 0)
-        (if pdf-view-roll-minor-mode
+        (if (bound-and-true-p pdf-view-roll-minor-mode)
             (pdf-roll-pre-redisplay window)
           (pdf-view-redisplay window)))
       (when changing-p
@@ -832,7 +832,7 @@ at the bottom edge of the page moves to the next page."
 
 (defun pdf-view-next-line-or-next-page (&optional arg)
   (interactive "p")
-  (if pdf-view-roll-minor-mode
+  (if (bound-and-true-p pdf-view-roll-minor-mode)
       (dotimes (_ (or arg 1)) (pdf-roll-scroll-forward))
     (pdf-view--next-line-or-next-page arg)))
 
@@ -856,7 +856,7 @@ at the top edge of the page moves to the previous page."
 
 (defun pdf-view-previous-line-or-previous-page (&optional arg)
   (interactive "p")
-  (if pdf-view-roll-minor-mode
+  (if (bound-and-true-p pdf-view-roll-minor-mode)
       (dotimes (_ (or arg 1)) (pdf-roll-scroll-backward))
     (pdf-view--previous-line-or-previous-page arg)))
 
@@ -1060,7 +1060,7 @@ If DISPLAYED-P is non-nil, return the size of the displayed
 image.  These values may be different, if slicing is used.
 
 If PAGE is non-nil return its size instead of current page."
-  (let ((display-prop (if pdf-view-roll-minor-mode
+  (let ((display-prop (if (bound-and-true-p pdf-view-roll-minor-mode)
                           (progn (setq window (if (windowp window) window (selected-window)))
                                  (setq page (or page (pdf-view-current-page window)))
                                  (unless (memq page (image-mode-window-get 'displayed-pages window))
@@ -1093,7 +1093,7 @@ It is equal to \(LEFT . TOP\) of the current slice in pixel."
 
 (defun pdf-view-display-image (image page &optional window inhibit-slice-p)
   ;; TODO: write documentation!
-  (if pdf-view-roll-minor-mode
+  (if (bound-and-true-p pdf-view-roll-minor-mode)
       (pdf-roll-display-image
        image page (or window (selected-window)) inhibit-slice-p)
     (let ((ol (pdf-view-current-overlay window)))
@@ -1153,7 +1153,7 @@ If WINDOW is t, redisplay pages in all windows."
     (force-mode-line-update)))
 
 (defun pdf-view-redisplay (&optional window)
-  (if pdf-view-roll-minor-mode
+  (if (bound-and-true-p pdf-view-roll-minor-mode)
       (pdf-roll-redisplay window)
     (pdf-view--redisplay window)))
 
@@ -1483,7 +1483,7 @@ Stores the region in `pdf-view-active-region'."
                   (setq begin-inside-image-p nil)
                   (posn-x-y pos)))
          (abs-begin (posn-x-y pos))
-         (page (if pdf-view-roll-minor-mode
+         (page (if (bound-and-true-p pdf-view-roll-minor-mode)
                    (/ (+ 3 (posn-point pos)) 4)
                  (pdf-view-current-page)))
          (margin (frame-char-height))
@@ -1545,7 +1545,7 @@ Stores the region in `pdf-view-active-region'."
                    (cons page (cons region (cdr pdf-view-active-region)))
                    rectangle-p
                    selection-style)
-                  (if pdf-view-roll-minor-mode
+                  (if (bound-and-true-p pdf-view-roll-minor-mode)
                       (cond
                        ((and (> dy 0) (< (- (window-text-height window t) y) margin))
                         (pdf-roll-scroll-forward
@@ -1595,7 +1595,7 @@ This is more useful for commands like
             page width nil selection-style nil
             `(,(car colors) ,(cdr colors) ,@(cdr region))))
        :width width)
-     (when pdf-view-roll-minor-mode page))))
+     (when (bound-and-true-p pdf-view-roll-minor-mode) page))))
 
 (defun pdf-view-kill-ring-save ()
   "Copy the region to the `kill-ring'."
@@ -1724,7 +1724,7 @@ The optional, boolean args exclude certain attributes."
                                   :key #'car-safe))))
         (cons (buffer-name)
               (append (bookmark-make-record-default
-                       nil t (if pdf-view-roll-minor-mode (point) 1))
+                       nil t (if (bound-and-true-p pdf-view-roll-minor-mode) (point) 1))
                       `(,(unless no-page
                            (cons 'page (pdf-view-current-page win)))
                         ,(unless no-slice
