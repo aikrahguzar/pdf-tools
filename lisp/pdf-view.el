@@ -956,6 +956,18 @@ dragging it to its bottom-right corner.  See also
             (cons (/ 1.0 (float (car size)))
                   (/ 1.0 (float (cdr size))))))))
 
+(defun pdf-view-slice-from-bounding-box (bb)
+  "Compute slice from bounding box BB."
+  (let ((margin (max 0 (or pdf-view-bounding-box-margin 0))))
+   (list (- (nth 0 bb)
+                         (/ margin 2.0))
+                      (- (nth 1 bb)
+                         (/ margin 2.0))
+                      (+ (- (nth 2 bb) (nth 0 bb))
+                         margin)
+                      (+ (- (nth 3 bb) (nth 1 bb))
+                         margin))))
+
 (defun pdf-view-set-slice-from-bounding-box (&optional window)
   "Set the slice from the page's bounding-box.
 
@@ -968,15 +980,7 @@ much more accurate than could be done manually using
 See also `pdf-view-bounding-box-margin'."
   (interactive)
   (let* ((bb (pdf-cache-boundingbox (pdf-view-current-page window)))
-         (margin (max 0 (or pdf-view-bounding-box-margin 0)))
-         (slice (list (- (nth 0 bb)
-                         (/ margin 2.0))
-                      (- (nth 1 bb)
-                         (/ margin 2.0))
-                      (+ (- (nth 2 bb) (nth 0 bb))
-                         margin)
-                      (+ (- (nth 3 bb) (nth 1 bb))
-                         margin))))
+         (slice (pdf-view-set-slice-from-bounding-box bb)))
     (apply 'pdf-view-set-slice
            (append slice (and window (list window))))))
 
