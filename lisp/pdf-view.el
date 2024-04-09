@@ -980,7 +980,7 @@ much more accurate than could be done manually using
 See also `pdf-view-bounding-box-margin'."
   (interactive)
   (let* ((bb (pdf-cache-boundingbox (pdf-view-current-page window)))
-         (slice (pdf-view-set-slice-from-bounding-box bb)))
+         (slice (pdf-view-slice-from-bounding-box bb)))
     (apply 'pdf-view-set-slice
            (append slice (and window (list window))))))
 
