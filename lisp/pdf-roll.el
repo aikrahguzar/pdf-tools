@@ -287,7 +287,10 @@ If PIXELS is non-nil N is number of pixels instead of lines."
              (if (eq (point) (- (point-max) 3))
                  (prog1 nil
                    (setq n (min n (max 0 (- occupied-pixels (/ (window-text-height window t) 2)))))
-                   (message "End of buffer"))
+                   (when (and (nth 3 data) (< (nth 3 data) n))
+                     ;; scroll exactly the remaining of the last page
+                     (setq n (nth 3 data))
+                     (message "End of buffer")))
                (when (>= n occupied-pixels)
                  (cl-decf n occupied-pixels))))
       (forward-char 4))
