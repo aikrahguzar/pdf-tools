@@ -957,14 +957,14 @@ dragging it to its bottom-right corner.  See also
 (defun pdf-view-slice-from-bounding-box (bb)
   "Compute slice from bounding box BB."
   (let ((margin (max 0 (or pdf-view-bounding-box-margin 0))))
-   (list (- (nth 0 bb)
-                         (/ margin 2.0))
-                      (- (nth 1 bb)
-                         (/ margin 2.0))
-                      (+ (- (nth 2 bb) (nth 0 bb))
-                         margin)
-                      (+ (- (nth 3 bb) (nth 1 bb))
-                         margin))))
+    (list (max 0 (- (nth 0 bb)
+                    (/ margin 2.0)))
+          (max 0 (- (nth 1 bb)
+                    (/ margin 2.0)))
+          (min 1 (+ (- (nth 2 bb) (nth 0 bb))
+                    margin))
+          (min 1 (+ (- (nth 3 bb) (nth 1 bb))
+                    margin)))))
 
 (defun pdf-view-page-slice-from-bounding-box (page)
   "Return the slice for PAGE using its bounding box.
