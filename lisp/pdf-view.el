@@ -1838,14 +1838,17 @@ works only with bookmarks created by
       (pdf-view-bookmark-jump-handler bmk)
       (run-hooks 'bookmark-after-jump-hook))))
 
+(cl-defmethod register-val-jump-to ((val (head pdf-bookmark)) _arg)
+  "Implentation of `register-val-jump-to' for jumping tp pdf register VAL."
+  (pdf-view-bookmark-jump (cdr val)))
+
+(cl-defmethod register-val-describe ((val (head pdf-bookmark)) _verbose)
+  "Implentation of `register-val-jump-to' for jumping tp pdf register VAL."
+  (pdf-view-registerv-print-func (cdr val)))
+
 (defun pdf-view-registerv-make ()
   "Create a PDF register entry of the current position."
-  (registerv-make
-   (pdf-view-bookmark-make-record nil t t)
-   :print-func 'pdf-view-registerv-print-func
-   :jump-func 'pdf-view-bookmark-jump
-   :insert-func (lambda (bmk)
-                  (insert (format "%S" bmk)))))
+  `(pdf-bookmark . ,(pdf-view-bookmark-make-record nil t t)))
 
 (defun pdf-view-registerv-print-func (bmk)
   "Print a textual representation of bookmark BMK.
