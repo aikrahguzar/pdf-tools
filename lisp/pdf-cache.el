@@ -27,6 +27,9 @@
 (require 'pdf-info)
 (require 'pdf-util)
 
+(declare-function pdf-view-create-page "pdf-view")
+(declare-function pdf-view-desired-image-size "pdf-view")
+
 
 ;; * ================================================================== *
 ;; * Customiazations
