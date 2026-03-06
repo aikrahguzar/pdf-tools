@@ -220,9 +220,9 @@ loaded."
   :type 'boolean)
 
 (defcustom pdf-view-incompatible-modes
-  '(linum-mode linum-relative-mode helm-linum-relative-mode
-	           nlinum-mode nlinum-hl-mode nlinum-relative-mode yalinum-mode
-               display-line-numbers-mode)
+  '( linum-mode linum-relative-mode helm-linum-relative-mode
+     nlinum-mode nlinum-hl-mode nlinum-relative-mode yalinum-mode
+     display-line-numbers-mode)
   "A list of modes incompatible with `pdf-view-mode'.
 
 Issue a warning, if one of them is active in a PDF buffer."
@@ -1772,7 +1772,7 @@ the `convert' program is used."
   (interactive
    (list (if (pdf-view-active-region-p)
              (pdf-view-active-region t)
-           '(,(pdf-view-current-page) (0 0 1 1)))))
+           `(,(pdf-view-current-page) (0 0 1 1)))))
   (unless page
     (setq page (car regions)))
   (unless size
