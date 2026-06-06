@@ -1332,19 +1332,17 @@ If WINDOW is t, redisplay pages in all windows."
                  (eq (window-buffer (car winprops)) (current-buffer))))
   (let ((ol (image-mode-window-get 'overlay winprops)))
     (if ol
-        (progn
-          (setq ol (copy-overlay ol))
-          ;; `ol' might actually be dead.
-          (move-overlay ol (point-min) (point-max)))
+        ;; `ol' might actually be dead.
+        (move-overlay ol (point-min) (point-max))
       (setq ol (make-overlay (point-min) (point-max) nil t))
       (overlay-put ol 'pdf-view t))
     (overlay-put ol 'window (car winprops))
-    (unless (windowp (car winprops))
+    (if (windowp (car winprops))
+        (image-mode-window-put 'overlay ol winprops)
       ;; It's a pseudo entry.  Let's make sure it's not displayed (the
       ;; `window' property is only effective if its value is a window).
       (cl-assert (eq t (car winprops)))
       (delete-overlay ol))
-    (image-mode-window-put 'overlay ol winprops)
     ;; Clean up some overlays.
     (dolist (ov (overlays-in (point-min) (point-max)))
       (when (and (windowp (overlay-get ov 'window))
