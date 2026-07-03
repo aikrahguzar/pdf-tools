@@ -115,16 +115,15 @@ top of EDGE is `next-screen-context-lines' down from the top the window."
   "Scroll if POS and REGION have moved too close to the edge of the window."
   (when-let ((window (posn-window pos))
              ((windowp window)))
-    (let* ((window (posn-window pos))
-           (margin (* next-screen-context-lines (frame-char-height)))
+    (let* ((margin (* next-screen-context-lines (frame-char-height)))
            (posspec (pos-visible-in-window-p (posn-point pos) window t))
            (y (cdr (posn-x-y pos)))
            (top (or (nth 2 posspec) 0))
            (dy (- (+ y top) (nth 1 region))))
       (cond
-       ((and (> dy 0) (< (- (window-text-height window t) y top) margin))
+       ((and (> dy 0) (< (- (window-text-height window t) y) margin))
         (pdf-roll-scroll-forward (min margin (or (nth 3 posspec) 0)) nil t))
-       ((and (< dy 0) (< y  margin))
+       ((and (< dy 0) (< y margin))
         (pdf-roll-scroll-backward (min margin top) nil t))))))
 
 ;;; Displaying/Undisplaying pages
