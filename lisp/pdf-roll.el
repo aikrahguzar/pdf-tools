@@ -127,6 +127,19 @@ top of EDGE is `next-screen-context-lines' down from the top the window."
         (pdf-roll-scroll-backward (min margin top) nil t))))))
 
 ;;; Displaying/Undisplaying pages
+(defun pdf-roll--display-height (page &optional window)
+  "Return the height with which the PAGE will be displayed in WINDOW."
+  (if-let* ((overlay (pdf-roll-page-overlay page window))
+            (display (overlay-get overlay 'display))
+            ((not (eq 'space (car-safe display)))))
+      (or (overlay-get overlay 'image-height)
+          (cdr (image-display-size display t)))
+    (let* ((image-size (pdf-view-desired-image-size page window))
+           (slice (pdf-view-get-slice window page)))
+      (if slice
+          (nth 3 (pdf-util-scale slice image-size 'round))
+        (cdr image-size)))))
+
 (defun pdf-roll--flush-spec (spec)
   "Flush the possibly sliced image in SPEC."
   (when (and (consp spec) (not (eq 'image (car spec))))
@@ -327,7 +340,7 @@ If PIXELS is non-nil N is number of pixels instead of lines."
     (setq window (or window (selected-window)))
     (cl-callf + n (window-vscroll window t))
     (goto-char (window-start window))
-    (while (let ((occupied-pixels (pdf-roll-display-page
+    (while (let ((occupied-pixels (pdf-roll--display-height
                                    (pdf-roll-page-at-current-pos) window)))
              (if (eq (point) (- (point-max) 7))
                  (let ((m (- occupied-pixels
@@ -353,10 +366,10 @@ If PIXELS is non-nil N is number of pixels instead of lines."
       (pdf-roll-scroll-forward (- n) window pixels)
     (setq n (* (or n 1) (if pixels 1 (frame-char-height))))
     (setq window (or window (selected-window)))
-    (cl-callf + n (- (cdr (pdf-view-image-size t window))
-                     (window-vscroll nil t)))
+    (cl-callf + n (- (pdf-roll--display-height (pdf-view-current-page) window)
+                     (window-vscroll window t)))
     (goto-char (window-start window))
-    (while (and (progn (cl-decf n (pdf-roll-display-page
+    (while (and (progn (cl-decf n (pdf-roll--display-height
                                    (pdf-roll-page-at-current-pos) window))
                        (> n 0))
                 (if (bobp)
