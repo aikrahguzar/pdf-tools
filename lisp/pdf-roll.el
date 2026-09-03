@@ -407,14 +407,22 @@ It is also added to `revert-buffer-function'.
 It erases the buffer and adds one line containing a space for each page."
   (image-mode-window-put 'displayed-pages nil)
   (setq pdf-roll--state nil)
-  (remove-overlays)
   (let ((pages (pdf-cache-number-of-pages))
         (inhibit-read-only t))
+    (remove-overlays)
     (erase-buffer)
     (dotimes (_i (* 2 (+ pages 1)))
       (insert " \n"))
     (delete-char -1)
     (set-buffer-modified-p nil)))
+
+(defun pdf-roll--around-revert (fun &rest args)
+  ":around advice for `revert-buffer-function'.
+See `add-function' for FUN and ARGS."
+  (remove-hook 'pre-redisplay-functions 'pdf-roll-pre-redisplay t)
+  (apply fun args)
+  (pdf-roll-initialize)
+  (add-hook 'pre-redisplay-functions 'pdf-roll-pre-redisplay nil t))
 
 (defvar pdf-view-roll-minor-mode-map
   (let ((map (make-sparse-keymap)))
@@ -433,6 +441,8 @@ It erases the buffer and adds one line containing a space for each page."
   :lighter " Continuous"
 
   (cond (pdf-view-roll-minor-mode
+         (pdf-roll-initialize)
+
          (setq-local mwheel-scroll-up-function #'pdf-roll-scroll-forward
                      mwheel-scroll-down-function #'pdf-roll-scroll-backward)
 
@@ -454,15 +464,13 @@ It erases the buffer and adds one line containing a space for each page."
          (add-hook 'pre-redisplay-functions 'pdf-roll-pre-redisplay nil t)
          (add-hook 'pdf-roll-after-change-page-hook 'pdf-history-before-change-page-hook nil t)
 
-         (add-function :after (local 'revert-buffer-function) #'pdf-roll-initialize)
+         (add-function :around (local 'revert-buffer-function) #'pdf-roll--around-revert)
 
          (make-local-variable 'pdf-roll--state)
 
          (when (local-variable-p 'pixel-scroll-precision-mode)
            (kill-local-variable 'pixel-scroll-precision-mode)
-           (kill-local-variable 'mwheel-coalesce-scroll-events))
-
-         (pdf-roll-initialize))
+           (kill-local-variable 'mwheel-coalesce-scroll-events)))
         (t
          (setq-local mwheel-scroll-up-function #'pdf-view-scroll-up-or-next-page
                      mwheel-scroll-down-function #'pdf-view-scroll-down-or-previous-page)
@@ -471,7 +479,7 @@ It erases the buffer and adds one line containing a space for each page."
          (add-hook 'window-configuration-change-hook 'pdf-view-redisplay-some-windows nil t)
          (add-hook 'image-mode-new-window-functions #'pdf-view-new-window-function nil t)
 
-         (remove-function (local 'revert-buffer-function) #'pdf-roll-initialize)
+         (remove-function (local 'revert-buffer-function) #'pdf-roll--around-revert)
 
          (remove-hook 'pre-redisplay-functions 'pdf-roll-pre-redisplay t)
          (remove-hook 'pdf-roll-after-change-page-hook 'pdf-history-before-change-page-hook t)
