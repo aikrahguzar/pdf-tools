@@ -333,7 +333,7 @@ If PIXELS is non-nil N is number of pixels instead of lines."
     (setq n (* (or n 1) (if pixels 1 (frame-char-height))))
     (setq window (or window (selected-window)))
     (cl-callf + n (window-vscroll window t))
-    (goto-char (window-start window))
+    (goto-char (pdf-roll-page-to-pos (pdf-view-current-page window)))
     (while (let ((occupied-pixels (pdf-roll--display-height
                                    (pdf-roll-page-at-current-pos) window)))
              (if (eq (point) (- (point-max) 7))
@@ -362,7 +362,7 @@ If PIXELS is non-nil N is number of pixels instead of lines."
     (setq window (or window (selected-window)))
     (cl-callf + n (- (pdf-roll--display-height (pdf-view-current-page) window)
                      (window-vscroll window t)))
-    (goto-char (window-start window))
+    (goto-char (pdf-roll-page-to-pos (pdf-view-current-page window)))
     (while (and (progn (cl-decf n (pdf-roll--display-height
                                    (pdf-roll-page-at-current-pos) window))
                        (> n 0))
