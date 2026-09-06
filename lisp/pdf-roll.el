@@ -140,13 +140,6 @@ top of EDGE is `next-screen-context-lines' down from the top the window."
           (nth 3 (pdf-util-scale slice image-size 'round))
         (cdr image-size)))))
 
-(defun pdf-roll--flush-spec (spec)
-  "Flush the possibly sliced image in SPEC."
-  (when (and (consp spec) (not (eq 'image (car spec))))
-    (setq spec (nth 1 spec)))
-  (when (imagep spec)
-    (image-flush spec)))
-
 (defun pdf-roll-display-image (image page &optional window inhibit-slice-p size)
   "Display IMAGE for PAGE of SIZE in WINDOW.
 If INHIBIT-SLICE-P is non-nil, disregard `pdf-view-current-slice'."
@@ -227,6 +220,7 @@ Replaces the display property of the overlay holding a page with a space."
                  ((not (window-live-p win-old))))
         (remove-overlays (point-min) (point-max) 'window win-old))))
   ;; initial `pdf-roll-redisplay' needs to know which page(s) to display
+  (image-mode-window-put 'displaued-pages win nil)
   (cl-callf or (pdf-view-current-page win) 1)
   (cl-callf or (image-mode-window-get 'vscroll win) 0)
   (pdf-view--restore-origin))
@@ -418,7 +412,6 @@ If PIXELS is non-nil N is number of pixels instead of lines."
 It is also added to `revert-buffer-function'.
 
 It erases the buffer and adds one line containing a space for each page."
-  (image-mode-window-put 'displayed-pages nil)
   (setq pdf-roll--state nil)
   (let ((pages (pdf-cache-number-of-pages))
         (inhibit-read-only t))
@@ -427,7 +420,8 @@ It erases the buffer and adds one line containing a space for each page."
     (dotimes (_i (* 2 (+ pages 1)))
       (insert " \n"))
     (delete-char -1)
-    (set-buffer-modified-p nil)))
+    (set-buffer-modified-p nil))
+  (add-hook 'pre-redisplay-functions 'pdf-roll-pre-redisplay nil t))
 
 (defun pdf-roll--around-revert (fun &rest args)
   ":around advice for `revert-buffer-function'.
@@ -474,9 +468,6 @@ See `add-function' for FUN and ARGS."
          (remove-hook 'window-configuration-change-hook 'pdf-view-redisplay-some-windows t)
          (remove-hook 'image-mode-new-window-functions #'pdf-view-new-window-function t)
 
-         (add-hook 'pre-redisplay-functions 'pdf-roll-pre-redisplay nil t)
-         (add-hook 'pdf-roll-after-change-page-hook 'pdf-history-before-change-page-hook nil t)
-
          (add-function :around (local 'revert-buffer-function) #'pdf-roll--around-revert)
 
          (make-local-variable 'pdf-roll--state)
@@ -495,7 +486,6 @@ See `add-function' for FUN and ARGS."
          (remove-function (local 'revert-buffer-function) #'pdf-roll--around-revert)
 
          (remove-hook 'pre-redisplay-functions 'pdf-roll-pre-redisplay t)
-         (remove-hook 'pdf-roll-after-change-page-hook 'pdf-history-before-change-page-hook t)
 
          (kill-local-variable 'pdf-roll--state)
 
